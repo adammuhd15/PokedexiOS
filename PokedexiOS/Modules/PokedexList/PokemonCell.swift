@@ -14,7 +14,8 @@ class PokemonCell: UITableViewCell {
     private let nameLabel = UILabel()
     private let idLabel = UILabel()
     
-    private var imageTask: URLSessionDataTask?
+    private var imageToken: Cancellable?
+    private let imageLoader: ImageLoaderProtocol = ImageLoader.shared
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -27,9 +28,9 @@ class PokemonCell: UITableViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-        imageTask?.cancel()
-        imageTask = nil
-        spriteView.image = nil
+        imageToken?.cancel()
+        imageToken = nil
+        spriteView.image = UIImage(systemName: "photo")
     }
     
     private func setupUI() {
@@ -72,13 +73,14 @@ class PokemonCell: UITableViewCell {
         
         guard let url = vm.spriteURL else { return }
         
-        // Minimal image loading (no cache yet). Add NSCache later.
-        imageTask = URLSession.shared.dataTask(with: url, completionHandler: { [weak self] data, _, _ in
-            guard let self, let data, let image = UIImage(data: data) else { return }
-            DispatchQueue.main.async {
-                self.spriteView.image = image
-            }
+        // If cached, set immediately (prevents flicker)
+        if let cached = imageLoader.cachedImage(for: url) {
+            spriteView.image = cached
+            return
+        }
+        
+        imageToken = imageLoader.load(url, completion: { [weak self] image in
+            self?.spriteView.image = image
         })
-        imageTask?.resume()
     }
 }

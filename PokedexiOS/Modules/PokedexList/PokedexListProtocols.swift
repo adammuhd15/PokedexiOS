@@ -1,5 +1,5 @@
 //
-//  PokedexListProtocol.swift
+//  PokedexListProtocols.swift
 //  PokedexiOS
 //
 //  Created by Adam Muhammad on 26/01/2026.
